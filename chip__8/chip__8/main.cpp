@@ -1,31 +1,24 @@
-#include "chip-8.h"
 #include <ctime>
-#include <cstdio>
 #include <random>
+#include "chip8.h"
 
-
-void emulate_cycle();
-void initialize();
-bool load_ROM(const char*);
-void drawn();
 
 int main(int argc, char* argv[])
 {
+	Chip8 chip8;
 	srand(time(NULL));
-	initialize();
-	if (!load_ROM("test_rom.c8"))
+	chip8.initialize();
+	if (!chip8.load_ROM("test_rom.c8"))
 	{
-		return 0 ;
+		return 0;
 	}
-	for (int i = 512; i < 4096; i++)
-		printf("%x \n", memory[i]);
 
 	for (;;)
 	{
-		emulate_cycle();
+		chip8.emulate_cycle();
 		
-		if (drawflag)
-			drawn();
+		if (chip8.drawflag)
+			chip8.drawn();
 	}
 
 	system("pause");
