@@ -3,23 +3,24 @@
 #include <random>
 #include <ctime>
 #include <fstream>
+#include <iostream>
 
 
 void emulate_cycle();
 void initialize();
-bool loadApplication(const char*);
+bool load_ROM(const char*);
 void drawn();
 
 int main(int argc, char* argv[])
 {
 	srand(time(NULL));
 	initialize();
-	memory[0x200] = 0x71;
-	memory[0x201] = 0x0F;
-	memory[0x202] = 0xF1;
-	memory[0x203] = 0x29;
-	memory[0x204] = 0xD0;
-	memory[0x205] = 0x05;
+	if (!load_ROM("test_rom.c8"))
+	{
+		return 0 ;
+	}
+	for (int i = 512; i < 4096; i++)
+		printf("%x \n", memory[i]);
 
 	for (;;)
 	{
@@ -28,6 +29,8 @@ int main(int argc, char* argv[])
 		if (drawflag)
 			drawn();
 	}
+
+	system("pause");
 }
 
 void initialize()
@@ -63,7 +66,7 @@ void emulate_cycle()
 {
 	instr = (memory[pc] << 8) | memory[pc + 1];
 	uint16_t nnn = instr & 0x0FFF;
-	uint8_t n    =  instr & 0x000F;
+	uint8_t n    = instr & 0x000F;
 	uint8_t x    = (instr >> 8) & 0xF;
 	uint8_t y    = (instr >> 4) & 0xF;
 	uint8_t kk   = instr & 0x00FF;
@@ -89,11 +92,13 @@ void emulate_cycle()
 		break;
 	case 0x1000:
 		pc = nnn;
+		pc -= 2;
 		break;
 	case 0x2000:
 		stack_pointer++;
 		stack[stack_pointer] = pc;
 		pc = nnn;
+		pc -= 2;
 		break;
 	case 0x3000:
 		if (registers[x] == kk)
@@ -308,54 +313,46 @@ void drawn()
 }
 
 
-bool loadApplication(const char * filename)
-{
-	initialize();
-	printf("Loading: %s\n", filename);
 
-	// Open file
-	FILE * pFile;
-	fopen_s(&pFile,filename, "rb");
-	if (pFile == NULL)
+bool load_ROM(const char* rom_title)
+{
+	FILE* rom;
+
+	fopen_s(&rom, rom_title, "rb");
+
+	if (rom == NULL)
 	{
-		fputs("File error", stderr);
+		fputs("Error of open ROM", stderr);
 		return false;
 	}
 
-	// Check file size
-	fseek(pFile, 0, SEEK_END);
-	long lSize = ftell(pFile);
-	rewind(pFile);
-	printf("Filesize: %d\n", (int)lSize);
+	//Take size of rom
+	fseek(rom, 0, SEEK_END);
+	long size = ftell(rom);
 
-	// Allocate memory to contain the whole file
-	char * buffer = (char*)malloc(sizeof(char) * lSize);
+	fseek(rom, 0, SEEK_SET);
+
+	uint8_t* buffer = (uint8_t*)malloc(size);
+
 	if (buffer == NULL)
 	{
-		fputs("Memory error", stderr);
+		fputs("Error of allocate of memory", stderr);
 		return false;
 	}
 
-	// Copy the file into the buffer
-	size_t result = fread(buffer, 1, lSize, pFile);
-	if (result != lSize)
+	long success_byte = fread(buffer, 1, size, rom);
+
+	if (success_byte != size)
 	{
-		fputs("Reading error", stderr);
+		fputs("Error of copy file to buffer", stderr);
 		return false;
 	}
 
-	// Copy buffer to Chip8 memory
-	if ((4096 - 512) > lSize)
+	if ((4096 - 512) > size)
 	{
-		for (int i = 0; i < lSize; ++i)
+		for (int i = 0; i < size; i++)
 			memory[i + 512] = buffer[i];
 	}
-	else
-		printf("Error: ROM too big for memory");
-
-	// Close file, free buffer
-	fclose(pFile);
-	free(buffer);
 
 	return true;
 }
