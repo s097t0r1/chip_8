@@ -2,6 +2,7 @@
 #define HELLO
 
 #include <cstdint>
+#include <SDL.h>
 
 enum {
 	V0 = 0,
@@ -36,6 +37,7 @@ private:
 	uint8_t disp[64 * 32];
 	uint8_t registers[16];
 	uint8_t memory[4096];
+	SDL_Rect pixels[64 * 32];
 
 public:
 	bool drawflag;
@@ -43,7 +45,8 @@ public:
 
 	void initialize();
 	bool load_ROM(const char*);
-	void drawn();
+	void drawn(SDL_Renderer* grenderer);
+	void drawn_debug();
 	void emulate_cycle();
 };
 
