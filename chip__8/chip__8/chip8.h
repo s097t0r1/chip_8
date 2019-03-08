@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <SDL.h>
 
+
 enum {
 	V0 = 0,
 	V1,
@@ -19,6 +20,7 @@ enum {
 	VB,
 	VC,
 	VD,
+	VE,
 	VF,
 	V_COUNT
 };
@@ -33,7 +35,6 @@ private:
 	uint8_t sound_timer;
 	uint8_t stack_pointer;
 	uint16_t stack[16];
-	uint8_t keys[16];
 	uint8_t disp[64 * 32];
 	uint8_t registers[16];
 	uint8_t memory[4096];
@@ -41,13 +42,16 @@ private:
 
 public:
 	bool drawflag;
+	uint8_t keys[16];
 
-
+	void emulate_cycle();
 	void initialize();
 	bool load_ROM(const char*);
 	void drawn(SDL_Renderer* grenderer);
 	void drawn_debug();
-	void emulate_cycle();
+	
+
+
 };
 
 

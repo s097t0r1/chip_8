@@ -2,6 +2,7 @@
 #include <random>
 #include <cstdint>
 #include <SDL.h>
+#include <Windows.h>
 
 
 
@@ -49,7 +50,7 @@ void Chip8::initialize()
 		memory[i] = chip8_fontset[i];
 
 	//clear registers
-	for (int i = 0; i < V_COUNT; i++)
+	for (int i = 0; i <= 0xF; i++)
 		registers[i] = 0;
 
 	//clear stack
@@ -61,7 +62,7 @@ void Chip8::initialize()
 	{
 		for (int w = 0; w < 64; w++)
 		{
-			pixels[h * 64 + w] = { w * 8, h * 8, 8, 8 };
+			pixels[h * 64 + w] = { w * 10, h * 10, 10, 10 };
 		}
 	}
 
@@ -69,6 +70,7 @@ void Chip8::initialize()
 
 void Chip8::emulate_cycle()
 {
+	Sleep(1);
 	instr = (memory[pc] << 8) | (memory[pc + 1]);
 	uint16_t nnn = instr & 0x0FFF;
 	uint8_t n = instr & 0x000F;
@@ -139,53 +141,40 @@ void Chip8::emulate_cycle()
 			registers[x] ^= registers[y];
 			break;
 		case 0x0004: // Set Vx = Vx + Vy, set VF = carry
-			if (registers[x] > (0xFF - registers[y]))
+			if (registers[y] > (0xFF - registers[x]))
 				registers[VF] = 1;
 			else
 				registers[VF] = 0;
+
 			registers[x] += registers[y];
 			break;
 		case 0x0005: // If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx.
-			if (registers[x] > registers[y])
-			{
-				registers[VF] = 1;
-			}
-			else
-			{
+			if (registers[y] > registers[x])
 				registers[VF] = 0;
-				registers[x] -= registers[y];
-			}
+			else
+				registers[VF] = 1;
+
+			registers[x] -= registers[y];
 			break;
 		case 0x0006: //If the least - significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is divided by 2.
-			if (registers[x] & 0x1)
-				registers[VF] = 1;
-			else
-			{
-				registers[VF] &= 0;
-				registers[x] = registers[x] >> 1; // Divide by 2
-			}
+			registers[VF] = registers[x] & 0x1;
+			registers[x] >>= 1;
+				 
 			break;
 		case 0x0007: // If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is subtracted from Vy, and the results stored in Vx.
-			if (registers[y] > registers[x])
-			{
-				registers[VF] = 1;
-			}
-			else
-			{
+			if (registers[x] > registers[y])
 				registers[VF] = 0;
-				registers[x] = registers[y] - registers[x];
-			}
+			else
+				registers[VF] = 1;
+			
+
+			registers[x] = registers[y] - registers[x];
 			break;
 		case 0x000E: // If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is multiplied by 2.
-			if ((registers[x] >> 7) & 0x1)
-			{
-				registers[VF] = 1;
-			}
-			else
-			{
-				registers[VF] &= 0;
-				registers[x] = registers[x] << 1; // Multiple by 2
-			}
+			registers[VF] = registers[x] >> 7;
+				 
+			// Multiple by 2
+			registers[x] <<= 1;
 			break;
 		default:
 			break;
@@ -225,7 +214,7 @@ void Chip8::emulate_cycle()
 			{
 				if ((mask & (0x80 >> xline)) != 0)
 				{
-					if (disp[x + xline + ((y_coord + yline) * 64)] == 1)
+					if (disp[x_coord + xline + ((y_coord + yline) * 64)] == 1)
 						registers[VF] = 1;
 					disp[x_coord + xline + ((y_coord + yline) * 64)] ^= 1;
 				}
@@ -252,6 +241,7 @@ void Chip8::emulate_cycle()
 		case 0x00A1: // Skip next instruction if key with the value of Vx is not pressed 
 			if (keys[registers[x]] == 0)
 				pc += 2;
+			break;
 
 		}
 		break;
@@ -264,8 +254,93 @@ void Chip8::emulate_cycle()
 			registers[x] = delay_timer;
 			break;
 		case 0x000A:
-			// Wait for a key press, store the value of the key in Vx.
+		{// Wait for a key press, store the value of the key in Vx.
+			bool key_down = 0;
+			SDL_Event e;
+			while (!key_down)
+			{
+				if (SDL_PollEvent(&e) > 0)
+				{
+					if (e.type == SDL_KEYDOWN)
+					{
+						switch (e.key.keysym.sym)
+						{
+
+						case SDLK_0:
+							registers[x] = 0;
+							break;
+
+						case SDLK_1:
+							registers[x] = 1;
+							break;
+
+						case SDLK_2:
+							registers[x] = 2;
+							break;
+
+						case SDLK_3:
+							registers[x] = 3;
+							break;
+
+						case SDLK_4:
+							registers[x] = 4;
+							break;
+
+						case SDLK_5:
+							registers[x] = 5;
+							break;
+
+						case SDLK_6:
+							registers[x] = 6;
+							break;
+
+						case SDLK_7:
+							registers[x] = 7;
+							break;
+
+						case SDLK_8:
+							registers[x] = 8;
+							break;
+
+						case SDLK_9:
+							registers[x] = 9;
+							break;
+
+						case SDLK_a:
+							registers[x] = 0xa;
+							break;
+
+						case SDLK_b:
+							registers[x] = 0xb;
+							break;
+
+						case SDLK_c:
+							registers[x] = 0xc;
+							break;
+
+						case SDLK_d:
+							registers[x] = 0xd;
+							break;
+
+						case SDLK_e:
+							registers[x] = 0xe;
+							break;
+
+						case SDLK_f:
+							registers[x] = 0xf;
+							break;
+
+						default:
+							break;
+						}
+
+						key_down = 1;
+					}
+				}
+			}
+
 			break;
+		}
 		case 0x0015: // Set delay timer = Vx
 			delay_timer = registers[x];
 			break;
@@ -284,7 +359,6 @@ void Chip8::emulate_cycle()
 			memory[I + 2] = (registers[x] % 100) % 10;
 			break;
 		case 0x0055: // Store registers V0 through Vx in memory starting at location I
-
 			for (int i = 0; i <= x; i++)
 				memory[I + i] = registers[i];
 			break;
@@ -299,6 +373,18 @@ void Chip8::emulate_cycle()
 	}
 	}
 	pc += 2;
+
+	//Print registers
+	for (int i = 0; i <= 0xF; i++)
+	{
+		printf("V%d - %x \n", i, registers[i]);
+	}
+
+	printf("PC - %x \n", pc);
+
+	printf("I - %x \n", I);
+
+	printf("------------------------------------------------------ \n");
 
 	if (delay_timer > 0)
 		delay_timer--;
