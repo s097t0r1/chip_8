@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 	Chip8 chip8;
 	srand(time(NULL));
 	chip8.initialize();
-	if (!chip8.load_ROM("blitz"))
+	if (!chip8.load_ROM("tetris.c8"))
 	{  
 		return 0;
 	}

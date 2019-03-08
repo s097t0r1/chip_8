@@ -206,7 +206,8 @@ void Chip8::emulate_cycle()
 	case 0xD000: // Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision
 	{
 		uint8_t x_coord = registers[x], y_coord = registers[y];
-		uint8_t mask;
+		uint16_t mask;
+		registers[VF] = 0;
 		for (uint8_t yline = 0; yline < n; yline++)
 		{
 			mask = memory[I + yline];
@@ -348,6 +349,11 @@ void Chip8::emulate_cycle()
 			sound_timer = registers[x];
 			break;
 		case 0x001E: // Set I = I + Vx
+			if (I + registers[x] > 0xFFF)
+				registers[VF] = 1;
+			else
+				registers[VF] = 0;
+
 			I += registers[x];
 			break;
 		case 0x0029: // Set I = location of sprite for digit Vx
