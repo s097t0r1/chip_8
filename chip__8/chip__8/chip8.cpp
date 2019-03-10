@@ -254,91 +254,20 @@ void Chip8::emulate_cycle()
 		case 0x0007: // Set Vx = delay timer value
 			registers[x] = delay_timer;
 			break;
-		case 0x000A:
-		{// Wait for a key press, store the value of the key in Vx.
-			bool key_down = 0;
-			SDL_Event e;
-			while (!key_down)
+		case 0x000A: // Wait for a key press, store the value of the key in Vx.
+		{
+			bool key_press = 0;
+			for (uint8_t i = 0; i < 0xF; i++)
 			{
-				if (SDL_PollEvent(&e) > 0)
+				if (keys[i] == 1)
 				{
-					if (e.type == SDL_KEYDOWN)
-					{
-						switch (e.key.keysym.sym)
-						{
-
-						case SDLK_0:
-							registers[x] = 0;
-							break;
-
-						case SDLK_1:
-							registers[x] = 1;
-							break;
-
-						case SDLK_2:
-							registers[x] = 2;
-							break;
-
-						case SDLK_3:
-							registers[x] = 3;
-							break;
-
-						case SDLK_4:
-							registers[x] = 4;
-							break;
-
-						case SDLK_5:
-							registers[x] = 5;
-							break;
-
-						case SDLK_6:
-							registers[x] = 6;
-							break;
-
-						case SDLK_7:
-							registers[x] = 7;
-							break;
-
-						case SDLK_8:
-							registers[x] = 8;
-							break;
-
-						case SDLK_9:
-							registers[x] = 9;
-							break;
-
-						case SDLK_a:
-							registers[x] = 0xa;
-							break;
-
-						case SDLK_b:
-							registers[x] = 0xb;
-							break;
-
-						case SDLK_c:
-							registers[x] = 0xc;
-							break;
-
-						case SDLK_d:
-							registers[x] = 0xd;
-							break;
-
-						case SDLK_e:
-							registers[x] = 0xe;
-							break;
-
-						case SDLK_f:
-							registers[x] = 0xf;
-							break;
-
-						default:
-							break;
-						}
-
-						key_down = 1;
-					}
+					registers[x] = i;
+					key_press = 1;
 				}
 			}
+
+			if (!key_press)
+				pc -= 2;
 
 			break;
 		}
@@ -478,4 +407,215 @@ void Chip8::drawn_debug()
 		}
 		printf("\n");
 	}
+}
+
+bool Chip8::disasm()
+{
+	if (pc > 0xFFF)
+		return true;
+
+
+	uint16_t instr = (memory[pc] << 8) | memory[pc + 1];
+	uint16_t nnn = instr & 0xFFF;
+	uint8_t n = instr & 0xF;
+	uint8_t x = (instr >> 8) & 0xF;
+	uint8_t y = (instr >> 4) & 0xF;
+	uint8_t kk = instr & 0xFF;
+
+	printf("0x%x                ", pc);
+
+	switch (instr & 0xF000)
+	{
+	case 0x0000:
+	{
+		switch (instr & 0x00FF)
+		{
+		case 0x00E0: // Clear display
+			printf("CLS");
+		break;
+
+		case 0x00EE: // Retrun from subroutine
+			printf("RET");
+		break;
+
+		default:
+			printf("???");
+		break;
+		}
+
+	break;
+	}
+	
+	case 0x1000:
+		printf("JP %x", nnn);
+	break;
+
+	case 0x2000:
+		printf("CALL %x", nnn);
+	break;
+
+	case 0x3000:
+		printf("SE V%x %x", x, kk);
+		break;
+
+	case 0x4000:
+		printf("SNE V%x %x", x, kk);
+		break;
+
+	case 0x5000:
+		printf("SE V%x V%x", x, y);
+		break;
+
+	case 0x6000:
+		printf("LD V%x %x", x, kk);
+		break;
+
+	case 0x7000:
+		printf("ADD V%x %x", x, kk);
+		break;
+
+	case 0x8000:
+	{
+		switch (0x000F)
+		{
+		case 0x0000:
+			printf("LD V%x V%x", x, y);
+			break;
+
+		case 0x0001:
+			printf("OR V%x V%y", x, y);
+			break;
+
+		case 0x0002:
+			printf("AND V%x V%x", x, y);
+			break;
+
+		case 0x0003:
+			printf("XOR V%x V%x", x, y);
+			break;
+
+		case 0x0004:
+			printf("ADD V%x V%x", x, y);
+			break;
+
+		case 0x0005:
+			printf("SUB V%x V%x", x, y);
+			break;
+
+		case 0x0006:
+			printf("SHR V%x", x);
+			break;
+		
+		case 0x0007:
+			printf("SUBN V%x V%x", x, y);
+			break;
+
+		case 0x000E:
+			printf("SHL V%x", x);
+			break;
+
+		default:
+			printf("???");
+			break;
+		}
+		break;
+
+	}
+
+	case 0x9000:
+		printf("SNE V%x V%x", x, y);
+		break;
+	
+	case 0xA000:
+		printf("LD I %x", nnn);
+		break;
+
+	case 0xB000:
+		printf("JP V0 %x", nnn);
+		break;
+
+	case 0xC000:
+		printf("RND V%x %x", x, kk);
+		break;
+	
+	case 0xD000:
+		printf("DRW V%x V%x %x", x, y, n);
+		break;
+
+	case 0xE000:
+	{
+		switch (0x00FF)
+		{
+		case 0x009E:
+			printf("SKP V%x", x);
+			break;
+		
+		case 0x00A1:
+			printf("SKNP V%x", x);
+			break;
+
+		default:
+			printf("???");
+			break;
+		}
+		break;
+	}
+
+	case 0xF000:
+	{
+		switch (0x00FF)
+		{
+		case 0x0007:
+			printf("LD V%x DT");
+			break;
+		
+		case 0x000A:
+			printf("LD V%x K");
+			break;
+		
+		case 0x0015:
+			printf("LD DT V%x", x);
+			break;
+
+		case 0x0018:
+			printf("LD ST V%x", x);
+			break;
+		
+		case 0x001E:
+			printf("ADD I V%x", x);
+			break;
+
+		case 0x0029:
+			printf("LD F V%x", x);
+			break;
+
+		case 0x0033:
+			printf("LD B V%x", x);
+			break;
+
+		case 0x0055:
+			printf("LD [I] V%x", x);
+			break;
+
+		case 0x0065:
+			printf("LD V%x [I]", x);
+			break;
+
+		default:
+			printf("???");
+			break;
+		}
+		break;
+	}
+
+	default:
+		printf("???");
+	break;
+	}
+
+	printf("\n");
+
+	pc += 2;
+	
+	return false;
 }

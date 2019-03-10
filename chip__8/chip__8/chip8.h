@@ -49,7 +49,7 @@ public:
 	bool load_ROM(const char*);
 	void drawn(SDL_Renderer* grenderer);
 	void drawn_debug();
-	
+	bool disasm();
 
 
 };
