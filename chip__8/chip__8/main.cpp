@@ -3,10 +3,12 @@
 #include <SDL.h>
 #include "chip8.h"
 #include <string.h>
+#include <SDL_mixer.h>
 
 SDL_Window* gwindow;
 SDL_Renderer* grenderer;
 SDL_Event e;
+
 
 
 
@@ -235,7 +237,7 @@ char* concat(const char* str1, const char* str2)
 
 bool init()
 {
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0)
 	{
 		printf("Error", SDL_GetError());
 		return false;
@@ -243,6 +245,11 @@ bool init()
 		
 	else
 	{
+		if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+		{
+			printf("Error mix", Mix_GetError());
+			return false;
+		}
 		gwindow = SDL_CreateWindow("CHIP-8", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 320, SDL_WINDOW_SHOWN);
 		if (gwindow == NULL)
 		{

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <SDL.h>
+#include <SDL_mixer.h>
 
 
 enum {
@@ -43,7 +44,7 @@ private:
 public:
 	bool drawflag;
 	uint8_t keys[16];
-
+	Mix_Chunk* sound;
 	void emulate_cycle();
 	void initialize();
 	bool load_ROM(const char*);

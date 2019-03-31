@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <SDL.h>
 #include <Windows.h>
-
+#include <SDL_mixer.h>
 
 
 uint8_t chip8_fontset[80] =
@@ -66,11 +66,17 @@ void Chip8::initialize()
 		}
 	}
 
+	sound = Mix_LoadWAV("hit.wav");
+	if (sound == NULL)
+	{
+		printf("Error mix %s", Mix_GetError());
+	}
+
 }
 
 void Chip8::emulate_cycle()
 {
-	Sleep(1);
+	Sleep(11E-3);
 	instr = (memory[pc] << 8) | (memory[pc + 1]);
 	uint16_t nnn = instr & 0x0FFF;
 	uint8_t n = instr & 0x000F;
@@ -324,7 +330,11 @@ void Chip8::emulate_cycle()
 	if (delay_timer > 0)
 		delay_timer--;
 	if (sound_timer > 0)
-		sound_timer > 0;
+	{
+		if (sound_timer == 1)
+			Mix_PlayChannel(-1, sound, 0);
+		sound_timer--;
+	}
 }
 
 
