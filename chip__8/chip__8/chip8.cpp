@@ -66,17 +66,17 @@ void Chip8::initialize()
 		}
 	}
 
-	sound = Mix_LoadWAV("hit.wav");
-	if (sound == NULL)
-	{
-		printf("Error mix %s", Mix_GetError());
-	}
+	//sound = Mix_LoadWAV("hit.wav");
+	//if (sound == NULL)
+	//{
+	//	printf("Error mix %s", Mix_GetError());
+	//}
 
 }
 
 void Chip8::emulate_cycle()
 {
-	Sleep(11E-3);
+	Sleep(1);
 	instr = (memory[pc] << 8) | (memory[pc + 1]);
 	uint16_t nnn = instr & 0x0FFF;
 	uint8_t n = instr & 0x000F;
@@ -316,7 +316,7 @@ void Chip8::emulate_cycle()
 	pc += 2;
 
 	//Print registers
-	for (int i = 0; i <= 0xF; i++)
+	/*for (int i = 0; i <= 0xF; i++)
 	{
 		printf("V%d - %x \n", i, registers[i]);
 	}
@@ -326,15 +326,10 @@ void Chip8::emulate_cycle()
 	printf("I - %x \n", I);
 
 	printf("------------------------------------------------------ \n");
+	*/
 
 	if (delay_timer > 0)
 		delay_timer--;
-	if (sound_timer > 0)
-	{
-		if (sound_timer == 1)
-			Mix_PlayChannel(-1, sound, 0);
-		sound_timer--;
-	}
 }
 
 
@@ -396,6 +391,9 @@ bool Chip8::load_ROM(const char* rom_title)
 		for (int i = 0; i < size; i++)
 			memory[i + 512] = buffer[i];
 	}
+
+	free(buffer);
+	buffer = NULL;
 
 	return true;
 }
